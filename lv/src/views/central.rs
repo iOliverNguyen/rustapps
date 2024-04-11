@@ -1,7 +1,6 @@
-use crate::StyledExtension;
-
 use super::*;
 use gpui::*;
+use gpui_ext::*;
 
 pub struct Central {
     focus_handle: FocusHandle,

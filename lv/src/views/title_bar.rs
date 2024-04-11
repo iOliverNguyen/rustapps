@@ -1,6 +1,5 @@
 use gpui::*;
-
-use crate::gpui_ext::*;
+use gpui_ext::*;
 
 pub struct TitleBar {
     focus_handle: FocusHandle,

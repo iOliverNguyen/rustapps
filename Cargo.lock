@@ -94,9 +94,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.81"
+version = "1.0.82"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0952808a6c2afd1aa8947271f3a60f1a6763c7b912d210184c5149b5cf147247"
+checksum = "f538837af36e6f6a9be0faa67f9a314f8119e4e4b5867c6ab40ed60360142519"
 
 [[package]]
 name = "arrayref"
@@ -851,7 +851,6 @@ dependencies = [
 [[package]]
 name = "collections"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "rustc-hash",
 ]
@@ -1143,7 +1142,6 @@ dependencies = [
 [[package]]
 name = "derive_refineable"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1819,7 +1817,6 @@ dependencies = [
 [[package]]
 name = "gpui"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "anyhow",
  "as-raw-xcb-connection",
@@ -1907,7 +1904,6 @@ dependencies = [
 [[package]]
 name = "gpui_macros"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2351,6 +2347,7 @@ version = "0.1.0"
 dependencies = [
  "clap 4.5.4",
  "gpui",
+ "gpui_ext",
  "serde",
  "serde_json",
  "serde_json_lenient",
@@ -2384,7 +2381,6 @@ checksum = "2532096657941c2fea9c289d370a250971c689d4f143798ff67113ec042024a5"
 [[package]]
 name = "media"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "anyhow",
  "bindgen",
@@ -3218,7 +3214,6 @@ dependencies = [
 [[package]]
 name = "refineable"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "derive_refineable",
 ]
@@ -3498,7 +3493,6 @@ checksum = "58bf37232d3bb9a2c4e641ca2a11d83b5062066f88df7fed36c28772046d65ba"
 [[package]]
 name = "semantic_version"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "anyhow",
  "serde",
@@ -3811,7 +3805,6 @@ checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 [[package]]
 name = "sum_tree"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "arrayvec 0.7.4",
  "log",
@@ -4270,9 +4263,11 @@ dependencies = [
 name = "uicolors"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "clap 4.5.4",
  "gpui",
  "gpui_ext",
+ "rust-embed",
 ]
 
 [[package]]
@@ -4419,7 +4414,6 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 [[package]]
 name = "util"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
 dependencies = [
  "anyhow",
  "async-fs 1.6.0",

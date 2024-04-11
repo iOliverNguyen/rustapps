@@ -1,6 +1,9 @@
+mod assets;
 mod cli;
+mod helpers;
 mod views;
 
+use assets::*;
 use clap::Parser;
 use gpui::*;
 use views::*;
@@ -11,7 +14,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = cli::Args::parse();
 
     let app = App::new();
-    app.run(|cx| {
+    app.with_assets(assets::Assets).run(|cx| {
         let opts = WindowOptions {
             bounds: Some(Bounds::centered(None, size(px(1200.), px(800.)), cx)),
             titlebar: Some(TitlebarOptions {

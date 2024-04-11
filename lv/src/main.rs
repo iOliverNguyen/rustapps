@@ -1,10 +1,8 @@
 use clap::Parser;
 use gpui::*;
-use gpui_ext::*;
 use views::Workspace;
 
 mod cli;
-mod gpui_ext;
 mod theme;
 mod views;
 

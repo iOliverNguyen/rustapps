@@ -1,7 +1,5 @@
-use crate::gpui_ext::*;
 use gpui::*;
-
-use super::Workspace;
+use gpui_ext::*;
 
 pub struct StatusBar {
     focus_handle: FocusHandle,
