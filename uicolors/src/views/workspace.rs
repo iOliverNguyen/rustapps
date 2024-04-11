@@ -5,7 +5,7 @@ use super::*;
 pub struct Workspace {
     focus_handle: FocusHandle,
 
-    title_bar: View<ColorPicker>,
+    title_bar: View<TitleBar>,
     status_bar: View<StatusBar>,
     left_panel: View<LeftPanel>,
     central: View<Central>,
@@ -15,7 +15,7 @@ impl Workspace {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
         Self {
             focus_handle: cx.focus_handle(),
-            title_bar: cx.new_view(|cx| ColorPicker::new(cx)),
+            title_bar: cx.new_view(|cx| TitleBar::new(cx)),
             status_bar: cx.new_view(|cx| StatusBar::new(cx)),
             left_panel: cx.new_view(|cx| LeftPanel::new(cx)),
             central: cx.new_view(|cx| Central::new(cx)),

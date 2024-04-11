@@ -1,14 +1,17 @@
+use super::*;
 use gpui::*;
 use gpui_ext::*;
 
 pub struct ColorPicker {
     focus_handle: FocusHandle,
+    color_slider: View<ColorSlider>,
 }
 
 impl ColorPicker {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
         Self {
             focus_handle: cx.focus_handle(),
+            color_slider: cx.new_view(|cx| ColorSlider::new(cx)),
         }
     }
 }
@@ -25,7 +28,7 @@ impl Render for ColorPicker {
             .w_full()
             .h(px(38.))
             .flex_center()
-            .bg(rgb(0x222222))
-            .child("color picker")
+            .bg(rgb(0xffffff))
+            .child(self.color_slider.clone())
     }
 }
