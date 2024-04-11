@@ -1,0 +1,11 @@
+# usage: source .alias
+
+alias cd.="cd ${PROJECT_ROOT}"
+
+alias cd_exp="cd ${PROJECT_ROOT}/_exp"
+alias cd.exp="cd ${PROJECT_ROOT}/_exp/exp"
+alias cd.lv="cd ${PROJECT_ROOT}/lv"
+alias cd.scripts="cd ${PROJECT_ROOT}/scripts"
+alias cd.theme="cd ${PROJECT_ROOT}/crates/theme"
+alias cd.uicolors="cd ${PROJECT_ROOT}/uicolors"
+alias cd.vscode="cd ${PROJECT_ROOT}/crates/import_vscode"
