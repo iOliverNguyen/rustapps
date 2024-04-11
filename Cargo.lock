@@ -1898,6 +1898,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpui_ext"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+]
+
+[[package]]
 name = "gpui_macros"
 version = "0.1.0"
 source = "git+https://github.com/zed-industries/zed#3e6a9f68907154009f6741bb8a2ec037c00b7bd8"
@@ -4262,6 +4269,11 @@ dependencies = [
 [[package]]
 name = "uicolors"
 version = "0.1.0"
+dependencies = [
+ "clap 4.5.4",
+ "gpui",
+ "gpui_ext",
+]
 
 [[package]]
 name = "unicase"

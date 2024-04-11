@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["_exp/exp", "uicolors", "crates/import_vscode", "crates/theme", "lv"]
+members = ["_exp/exp", "uicolors", "crates/import_vscode", "crates/theme", "lv", "crates/gpui_ext"]
 
 [workspace.dependencies]
 clap = { version = "4.5.4", features = ["derive"] }

@@ -4,3 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { workspace = true, features = ["derive"] }
+gpui.workspace = true
+gpui_ext = { version = "0.1.0", path = "../crates/gpui_ext" }
