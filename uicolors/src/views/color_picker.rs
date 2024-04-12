@@ -11,7 +11,7 @@ impl ColorPicker {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
         Self {
             focus_handle: cx.focus_handle(),
-            color_slider: cx.new_view(|cx| ColorSlider::new(cx)),
+            color_slider: ColorSlider::new(cx),
         }
     }
 }

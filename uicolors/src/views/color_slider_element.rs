@@ -1,15 +1,11 @@
 use crate::*;
 use gpui::*;
 use image::{Bgra, ImageBuffer};
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 pub struct ColorSliderElement {
-    focus_handle: FocusHandle,
-    focused: bool,
+    slider_view: View<ColorSlider>,
     interactivity: Interactivity,
-
-    bounds: Option<Bounds<Pixels>>,
-    image_data: Option<Arc<ImageData>>,
 }
 
 impl StatefulInteractiveElement for ColorSliderElement {}
@@ -29,14 +25,10 @@ impl IntoElement for ColorSliderElement {
 }
 
 impl ColorSliderElement {
-    pub fn new(focus_handle: FocusHandle, focused: bool) -> Self {
+    pub fn new(slider_view: &View<ColorSlider>) -> Self {
         Self {
-            focus_handle,
-            focused,
+            slider_view: slider_view.clone(),
             interactivity: Default::default(),
-
-            bounds: None,
-            image_data: None,
         }
     }
 
@@ -48,10 +40,8 @@ impl ColorSliderElement {
 
 impl Element for ColorSliderElement {
     type BeforeLayout = ();
-    type AfterLayout = ();
+    type AfterLayout = Option<Arc<ImageData>>;
 
-    /// Before an element can be painted, we need to know where it's going to be and how big it is.
-    /// Use this method to request a layout from Taffy and initialize the element's state.
     fn before_layout(&mut self, cx: &mut ElementContext) -> (LayoutId, Self::BeforeLayout) {
         self.interactivity.occlude_mouse();
         let layout_id = self.interactivity.before_layout(cx, |mut style, cx| {
@@ -64,24 +54,25 @@ impl Element for ColorSliderElement {
         (layout_id, ())
     }
 
-    /// After laying out an element, we need to commit its bounds to the current frame for hitbox
-    /// purposes. The state argument is the same state that was returned from [`Element::before_layout()`].
     fn after_layout(
         &mut self,
         bounds: Bounds<Pixels>,
         before_layout: &mut Self::BeforeLayout,
         cx: &mut ElementContext,
     ) -> Self::AfterLayout {
-        self.image_data = match self.bounds {
-            None => Some(Arc::new(self.gen_image_data(bounds))),
-            Some(b) if b != bounds => Some(Arc::new(self.gen_image_data(bounds))),
-            _ => self.image_data.clone(),
-        };
-        self.bounds = Some(bounds);
+        let image_data = self.slider_view.update(cx, |view, cx| {
+            let image_data = match view.bounds {
+                None => Some(Arc::new(self.gen_image_data(bounds))),
+                Some(b) if b.size != bounds.size => Some(Arc::new(self.gen_image_data(bounds))),
+                _ => view.image_data.clone(),
+            };
+            view.bounds = Some(bounds);
+            view.image_data = image_data.clone();
+            image_data
+        });
+        image_data
     }
 
-    /// Once layout has been completed, this method will be called to paint the element to the screen.
-    /// The state argument is the same state that was returned from [`Element::before_layout()`].
     fn paint(
         &mut self,
         bounds: Bounds<Pixels>,
@@ -89,10 +80,9 @@ impl Element for ColorSliderElement {
         after_layout: &mut Self::AfterLayout,
         cx: &mut ElementContext,
     ) {
-        if let Some(data) = &self.image_data {
+        if let Some(data) = after_layout {
             cx.paint_image(bounds, Corners::all(px(0.)), data.clone(), false)
                 .log_err();
-            println!("ok {:?} {:?}", bounds, data);
         }
     }
 }

@@ -1,16 +1,22 @@
 use crate::*;
 use gpui::*;
 use gpui_ext::*;
+use std::sync::Arc;
 
 pub struct ColorSlider {
     focus_handle: FocusHandle,
+
+    pub bounds: Option<Bounds<Pixels>>,
+    pub image_data: Option<Arc<ImageData>>,
 }
 
 impl ColorSlider {
-    pub fn new(cx: &mut ViewContext<Self>) -> Self {
-        Self {
+    pub fn new<T: 'static>(cx: &mut ViewContext<T>) -> View<Self> {
+        cx.new_view(|cx| Self {
             focus_handle: cx.focus_handle(),
-        }
+            bounds: None,
+            image_data: None,
+        })
     }
 }
 
@@ -27,6 +33,6 @@ impl Render for ColorSlider {
         div()
             .w_full()
             .h(px(10.))
-            .child(ColorSliderElement::new(self.focus_handle.clone(), focused))
+            .child(ColorSliderElement::new(cx.view()))
     }
 }
