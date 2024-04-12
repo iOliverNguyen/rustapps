@@ -3,19 +3,17 @@ use gpui::*;
 use gpui_ext::*;
 
 pub struct Central {
-    focus_handle: FocusHandle,
-
     color_input: View<ColorInput>,
     color_palette: View<ColorPalette>,
+    focus_handle: FocusHandle,
 }
 
 impl Central {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
         Self {
-            focus_handle: cx.focus_handle(),
-
-            color_input: cx.new_view(|cx| ColorInput::new(cx)),
+            color_input: cx.new_view(|cx| ColorInput::new(cx, rgb(0xff0000).into())),
             color_palette: cx.new_view(|cx| ColorPalette::new(cx)),
+            focus_handle: cx.focus_handle(),
         }
     }
 }

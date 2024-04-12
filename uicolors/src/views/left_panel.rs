@@ -42,6 +42,7 @@ impl Render for LeftPanel {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         div()
             .w(rems(10.))
+            .min_w(rems(10.))
             .h_full()
             .bg(rgb(0x444488))
             .child(
