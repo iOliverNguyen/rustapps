@@ -5,7 +5,10 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.82"
+image = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 gpui.workspace = true
 gpui_ext = { version = "0.1.0", path = "../crates/gpui_ext" }
 rust-embed = "8.3.0"
+tracing.workspace = true
+tracing-subscriber = "0.3.18"

@@ -6,6 +6,9 @@ mod views;
 use assets::*;
 use clap::Parser;
 use gpui::*;
+use helpers::*;
+use tracing::Level;
+use tracing_subscriber::FmtSubscriber;
 use views::*;
 
 actions!(app, [Quit, About]);
@@ -49,4 +52,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     Ok(())
+}
+
+fn init_log() {
+    let subscriber = FmtSubscriber::builder()
+        .with_max_level(Level::TRACE)
+        .with_file(true)
+        .with_line_number(true)
+        .finish();
+
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 }
