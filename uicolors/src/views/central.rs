@@ -3,16 +3,16 @@ use gpui::*;
 use gpui_ext::*;
 
 pub struct Central {
-    color_input: View<ColorInput>,
-    color_palette: View<ColorPalette>,
+    color_input: View<ColorInputView>,
+    color_palette: View<ColorPaletteView>,
     focus_handle: FocusHandle,
 }
 
 impl Central {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
         Self {
-            color_input: cx.new_view(|cx| ColorInput::new(cx, rgb(0xff0000).into())),
-            color_palette: cx.new_view(|cx| ColorPalette::new(cx)),
+            color_input: cx.new_view(|cx| ColorInputView::new(cx, rgb(0xff0000).into())),
+            color_palette: cx.new_view(|cx| ColorPaletteView::new(cx)),
             focus_handle: cx.focus_handle(),
         }
     }

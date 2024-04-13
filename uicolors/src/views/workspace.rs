@@ -1,19 +1,28 @@
+use super::*;
+use crate::{ColorFormat, ColorLibrary, ColorPalette};
 use gpui::*;
 
-use super::*;
-
 pub struct Workspace {
-    focus_handle: FocusHandle,
+    library: Model<ColorLibrary>,
+    active_color: Model<ColorFormat>,
+    active_palette: Model<ColorPalette>,
 
     title_bar: View<TitleBar>,
     status_bar: View<StatusBar>,
     left_panel: View<LeftPanel>,
     central: View<Central>,
+    focus_handle: FocusHandle,
 }
 
 impl Workspace {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
+        let color = ColorFormat::from("#84cc16");
+
         Self {
+            library: cx.new_model(|x| ColorLibrary::default()),
+            active_color: cx.new_model(|cx| color),
+            active_palette: cx.new_model(|cx| ColorPalette::from(color.normalize())),
+
             focus_handle: cx.focus_handle(),
             title_bar: cx.new_view(|cx| TitleBar::new(cx)),
             status_bar: cx.new_view(|cx| StatusBar::new(cx)),

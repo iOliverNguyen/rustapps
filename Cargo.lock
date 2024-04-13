@@ -4269,6 +4269,8 @@ dependencies = [
  "gpui_ext",
  "image",
  "rust-embed",
+ "serde",
+ "serde_json",
  "tracing",
  "tracing-subscriber",
 ]

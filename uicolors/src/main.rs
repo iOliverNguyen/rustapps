@@ -1,12 +1,14 @@
 mod assets;
 mod cli;
 mod helpers;
+mod models;
 mod views;
 
 use assets::*;
 use clap::Parser;
 use gpui::*;
 use helpers::*;
+use models::*;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use views::*;

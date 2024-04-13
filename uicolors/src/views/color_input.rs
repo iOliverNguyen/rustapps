@@ -4,7 +4,7 @@ use gpui::*;
 use gpui_ext::*;
 use tracing_subscriber::fmt::init;
 
-pub struct ColorInput {
+pub struct ColorInputView {
     color: Hsla,
     hue_slider: View<ColorSlider>,
     saturation_slider: View<ColorSlider>,
@@ -12,7 +12,7 @@ pub struct ColorInput {
     focus_handle: FocusHandle,
 }
 
-impl ColorInput {
+impl ColorInputView {
     pub fn new(cx: &mut ViewContext<Self>, color: Hsla) -> Self {
         Self {
             color,
@@ -24,13 +24,13 @@ impl ColorInput {
     }
 }
 
-impl FocusableView for ColorInput {
+impl FocusableView for ColorInputView {
     fn focus_handle(&self, cx: &AppContext) -> FocusHandle {
         self.focus_handle.clone()
     }
 }
 
-impl Render for ColorInput {
+impl Render for ColorInputView {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         div()
             .w(px(500.))

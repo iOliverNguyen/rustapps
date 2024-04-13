@@ -1,11 +1,11 @@
 use gpui::*;
 use gpui_ext::*;
 
-pub struct ColorPalette {
+pub struct ColorPaletteView {
     focus_handle: FocusHandle,
 }
 
-impl ColorPalette {
+impl ColorPaletteView {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
         Self {
             focus_handle: cx.focus_handle(),
@@ -13,13 +13,13 @@ impl ColorPalette {
     }
 }
 
-impl FocusableView for ColorPalette {
+impl FocusableView for ColorPaletteView {
     fn focus_handle(&self, cx: &AppContext) -> FocusHandle {
         self.focus_handle.clone()
     }
 }
 
-impl Render for ColorPalette {
+impl Render for ColorPaletteView {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
         div()
             .w_full()
