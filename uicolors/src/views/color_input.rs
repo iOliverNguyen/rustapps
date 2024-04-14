@@ -1,26 +1,70 @@
 use crate::*;
-use clap::builder::styling::Color;
 use gpui::*;
 use gpui_ext::*;
-use tracing_subscriber::fmt::init;
+use tracing::instrument::WithSubscriber;
 
 pub struct ColorInputView {
-    color: Hsla,
+    c: Model<Hsla>,
+    color: Model<ColorFormat>,
+    palette: Model<ColorPalette>,
     hue_slider: View<ColorSlider>,
     saturation_slider: View<ColorSlider>,
     lightness_slider: View<ColorSlider>,
     focus_handle: FocusHandle,
+    _subscriptions: Vec<Subscription>,
 }
 
 impl ColorInputView {
-    pub fn new(cx: &mut ViewContext<Self>, color: Hsla) -> Self {
+    pub fn new(
+        cx: &mut ViewContext<Self>,
+        color: Model<ColorFormat>,
+        palette: Model<ColorPalette>,
+    ) -> Self {
+        let c = cx.new_model(|cx| color.read(cx).canonicalize());
+        let _subscriptions = vec![
+            cx.observe(&color, Self::handle_color_change),
+            cx.subscribe(&c, Self::handle_color_slider_event),
+        ];
+
         Self {
+            c: c.clone(),
             color,
+            palette,
             focus_handle: cx.focus_handle(),
-            hue_slider: ColorSlider::new(cx, ColorScale::Hue, color),
-            saturation_slider: ColorSlider::new(cx, ColorScale::Saturation, color),
-            lightness_slider: ColorSlider::new(cx, ColorScale::Lightness, color),
+            hue_slider: ColorSlider::new(cx, ColorScale::Hue, c.clone()),
+            saturation_slider: ColorSlider::new(cx, ColorScale::Saturation, c.clone()),
+            lightness_slider: ColorSlider::new(cx, ColorScale::Lightness, c.clone()),
+            _subscriptions,
         }
+    }
+
+    fn handle_color_change(&mut self, color: Model<ColorFormat>, cx: &mut ViewContext<Self>) {
+        let new_color = color.read(cx).canonicalize();
+        self.c.update(cx, |c, cx| {
+            *c = new_color;
+            cx.notify();
+        });
+    }
+
+    fn handle_color_slider_event(
+        &mut self,
+        _: Model<Hsla>,
+        event: &ColorSliderEvent,
+        cx: &mut ViewContext<Self>,
+    ) {
+        match event {
+            ColorSliderEvent::ColorChanged(new_color) => {
+                self.color.update(cx, |color, cx| {
+                    *color = ColorFormat::from(*new_color);
+                    cx.notify();
+                });
+                self.palette.update(cx, |palette, cx| {
+                    *palette = ColorPalette::from(*new_color);
+                    cx.notify();
+                })
+            }
+        };
+        cx.refresh();
     }
 }
 
@@ -32,6 +76,12 @@ impl FocusableView for ColorInputView {
 
 impl Render for ColorInputView {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
+        let color = self.color.read(cx);
+        let (h, s, l) = color.split_hsl();
+        let palette = self.palette.read(cx);
+        let mut fade_label_color = palette.at_darkness(300);
+        fade_label_color.fade_out(0.5);
+
         div()
             .w(px(500.))
             .flex_center()
@@ -49,10 +99,11 @@ impl Render for ColorInputView {
                             .child(
                                 div()
                                     .font("Monaspace Xenon")
+                                    .text_color(palette.at_darkness(300))
                                     .rounded(px(24.))
-                                    .w(px(400.))
+                                    .w(px(700.))
                                     .h(px(48.))
-                                    .bg(rgb(0x008888))
+                                    .bg(palette.at_darkness(900))
                                     .flex()
                                     .flex_row()
                                     .justify_between()
@@ -61,11 +112,11 @@ impl Render for ColorInputView {
                                         div()
                                             .h_full()
                                             .border_t_width(px(4.))
-                                            .border_l_width(px(20.))
+                                            .border_l_width(px(32.))
                                             .flex()
                                             .items_center()
                                             .justify_start()
-                                            .child("#abcdef"),
+                                            .child(color.to_rgb().to_string().to_uppercase()),
                                     )
                                     .child(
                                         div()
@@ -76,22 +127,29 @@ impl Render for ColorInputView {
                                             .flex_row()
                                             .items_center()
                                             .justify_end()
-                                            .child(div().text_color(rgba(0x00000033)).child("H"))
-                                            .child("123")
                                             .child(
                                                 div()
-                                                    .border_l_width(px(4.))
-                                                    .text_color(rgba(0x00000033))
+                                                    .border_r_width(px(4.))
+                                                    .text_color(fade_label_color)
+                                                    .child("H"),
+                                            )
+                                            .child(format!("{:<3}", h))
+                                            .child(
+                                                div()
+                                                    .border_l_width(px(16.))
+                                                    .border_r_width(px(4.))
+                                                    .text_color(fade_label_color)
                                                     .child("S"),
                                             )
-                                            .child("100")
+                                            .child(format!("{:<3}", s))
                                             .child(
                                                 div()
-                                                    .border_l_width(px(4.))
-                                                    .text_color(rgba(0x00000033))
+                                                    .border_l_width(px(16.))
+                                                    .border_r_width(px(4.))
+                                                    .text_color(fade_label_color)
                                                     .child("L"),
                                             )
-                                            .child("100"),
+                                            .child(format!("{:<3}", l)),
                                     ),
                             ),
                     )
@@ -101,7 +159,7 @@ impl Render for ColorInputView {
                                 .rounded_full()
                                 .w(px(100.))
                                 .h(px(100.))
-                                .bg(rgb(0x880088)),
+                                .bg(color.canonicalize()),
                         ),
                     ),
             )

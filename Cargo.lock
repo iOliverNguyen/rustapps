@@ -4268,6 +4268,8 @@ dependencies = [
  "gpui",
  "gpui_ext",
  "image",
+ "once_cell",
+ "rand",
  "rust-embed",
  "serde",
  "serde_json",

@@ -2,6 +2,7 @@ mod assets;
 mod cli;
 mod helpers;
 mod models;
+mod states;
 mod views;
 
 use assets::*;
@@ -9,14 +10,16 @@ use clap::Parser;
 use gpui::*;
 use helpers::*;
 use models::*;
+use states::*;
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 use views::*;
 
-actions!(app, [Quit, About]);
+actions!(app, [Quit, RandomColor]);
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = cli::Args::parse();
+    init_log();
 
     let app = App::new();
     let text_sys = app.text_system();
@@ -44,18 +47,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         cx.activate(true);
         cx.on_action(|act: &Quit, cx| cx.quit());
-        cx.bind_keys([KeyBinding::new("cmd-q", Quit, None)]);
-
-        cx.set_menus(vec![
-            Menu {
-                name: "",
-                items: vec![MenuItem::action("Quit", Quit)],
-            },
-            Menu {
-                name: "Help",
-                items: vec![MenuItem::action("About", About)],
-            },
+        cx.bind_keys([
+            KeyBinding::new("cmd-q", Quit, None),
+            KeyBinding::new("space", RandomColor, None),
         ]);
+
+        cx.set_menus(vec![Menu {
+            name: "",
+            items: vec![
+                MenuItem::action("Random color", RandomColor),
+                MenuItem::action("Quit", Quit),
+            ],
+        }]);
     });
 
     Ok(())

@@ -4,14 +4,28 @@ use gpui_ext::*;
 use image::{Bgra, ImageBuffer};
 use std::sync::Arc;
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ColorSliderEvent {
+    ColorChanged(Hsla),
+}
+
+impl EventEmitter<ColorSliderEvent> for Hsla {}
+
 pub enum ColorScale {
     Hue,
     Saturation,
     Lightness,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum MouseClickOrDrag {
+    Click,
+    Drag,
+    Release,
+}
+
 impl ColorScale {
-    fn range(self) -> (f32, f32) {
+    fn range(&self) -> (f32, f32) {
         match self {
             ColorScale::Hue => (0., 360.),
             ColorScale::Saturation => (0., 100.),
@@ -67,27 +81,94 @@ impl ColorScale {
 }
 
 pub struct ColorSlider {
-    pub color: Hsla,
+    pub color: Model<Hsla>,
     pub scale: ColorScale,
     pub value: f32,
     pub padding: f32,
     pub bounds: Option<Bounds<Pixels>>,
     pub image_data: Option<Arc<ImageData>>,
 
+    dragging: bool,
     focus_handle: FocusHandle,
 }
 
 impl ColorSlider {
-    pub fn new<T: 'static>(cx: &mut ViewContext<T>, scale: ColorScale, color: Hsla) -> View<Self> {
+    pub fn new<T: 'static>(
+        cx: &mut ViewContext<T>,
+        scale: ColorScale,
+        color: Model<Hsla>,
+    ) -> View<Self> {
+        let value = match scale {
+            ColorScale::Hue => color.read(cx).h,
+            ColorScale::Saturation => color.read(cx).s,
+            ColorScale::Lightness => color.read(cx).l,
+        };
         cx.new_view(|cx| Self {
             color,
             scale,
-            value: 0.,
-            padding: 10.,
+            value,
+            padding: 4.,
             bounds: None,
             image_data: None,
+            dragging: false,
             focus_handle: cx.focus_handle(),
         })
+    }
+
+    fn handle_mouse_click_or_drag(
+        &mut self,
+        cx: &mut ViewContext<Self>,
+        ev: MouseClickOrDrag,
+        pos: Point<Pixels>,
+    ) {
+        if let Some(bounds) = self.bounds {
+            match ev {
+                MouseClickOrDrag::Click => {
+                    if !bounds.contains(&pos) {
+                        return;
+                    }
+                    self.dragging = true;
+                }
+                MouseClickOrDrag::Release => {
+                    self.dragging = false;
+                    return;
+                }
+                MouseClickOrDrag::Drag => {
+                    if !self.dragging {
+                        return;
+                    }
+                }
+            };
+
+            let x = pos.x - bounds.origin.x - px(self.padding);
+            let w = bounds.size.width - self.padding * px(2.);
+            match self.scale {
+                ColorScale::Hue => {
+                    let hue = (x / w).clamp(0., 1.);
+                    self.color.update(cx, |color, cx| {
+                        color.h = hue;
+                        cx.notify();
+                        cx.emit(ColorSliderEvent::ColorChanged(*color));
+                    });
+                }
+                ColorScale::Saturation => {
+                    let saturation = (x / w).clamp(0., 1.);
+                    self.color.update(cx, |color, cx| {
+                        color.s = saturation;
+                        cx.notify();
+                        cx.emit(ColorSliderEvent::ColorChanged(*color));
+                    });
+                }
+                ColorScale::Lightness => {
+                    let lightness = (x / w).clamp(0., 1.);
+                    self.color.update(cx, |color, cx| {
+                        color.l = lightness;
+                        cx.notify();
+                        cx.emit(ColorSliderEvent::ColorChanged(*color));
+                    });
+                }
+            }
+        }
     }
 }
 
@@ -99,13 +180,31 @@ impl FocusableView for ColorSlider {
 
 impl Render for ColorSlider {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        let size = 20.;
+        let thumb_size = 20.;
         let border = 3.;
         let focused = self.focus_handle.is_focused(cx);
+        let color = self.color.read(cx);
+        let value = match self.scale {
+            ColorScale::Hue => color.h,
+            ColorScale::Saturation => color.s,
+            ColorScale::Lightness => color.l,
+        };
+        let thumb_color = match self.scale {
+            ColorScale::Hue => hsla(color.h, 1., 0.5, 1.),
+            ColorScale::Saturation => hsla(color.h, color.s, color.l, 1.),
+            ColorScale::Lightness => hsla(color.h, color.s, color.l, 1.),
+        };
+        let thumb_x: Pixels = match self.bounds {
+            None => px(0.),
+            Some(bounds) => {
+                let range = bounds.size.width - self.padding * px(2.);
+                value * range - px(thumb_size) / 2. + px(self.padding)
+            }
+        };
 
         div()
             .w_full()
-            .h(px(size))
+            .h(px(thumb_size))
             .flex_center()
             .child(
                 div()
@@ -117,20 +216,20 @@ impl Render for ColorSlider {
                 div()
                     .absolute()
                     .top(px(0.))
-                    .left(px(-1.))
-                    .w(px(size))
-                    .h(px(size))
-                    .rounded(px(size / 2.))
-                    .bg(rgb(0xdddddd))
+                    .left(thumb_x)
+                    .w(px(thumb_size))
+                    .h(px(thumb_size))
+                    .rounded(px(thumb_size / 2.))
+                    .bg(hsla(0., 0., 0.8, 1.))
                     .child(
                         div()
                             .absolute()
                             .top(px(border))
                             .left(px(border))
-                            .w(px(size - border * 2.))
-                            .h(px(size - border * 2.))
-                            .rounded(px(size / 2. - border))
-                            .bg(rgb(0x888888)),
+                            .w(px(thumb_size - border * 2.))
+                            .h(px(thumb_size - border * 2.))
+                            .rounded(px(thumb_size / 2. - border))
+                            .bg(thumb_color),
                     ),
             )
     }
@@ -171,7 +270,7 @@ impl Element for ColorSliderElement {
     type AfterLayout = Option<Arc<ImageData>>;
 
     fn before_layout(&mut self, cx: &mut ElementContext) -> (LayoutId, Self::BeforeLayout) {
-        self.interactivity.occlude_mouse();
+        // self.interactivity.occlude_mouse();
         let layout_id = self.interactivity.before_layout(cx, |mut style, cx| {
             style.size.width = relative(1.).into();
             style.size.height = relative(1.).into();
@@ -200,7 +299,7 @@ impl Element for ColorSliderElement {
                         f32::from(width),
                         f32::from(height),
                         view.padding,
-                        view.color,
+                        view.color.read(cx).to_owned(),
                     )
                 }))
             } else {
@@ -220,6 +319,35 @@ impl Element for ColorSliderElement {
         cx: &mut ElementContext,
     ) {
         if let Some(data) = after_layout {
+            cx.on_mouse_event({
+                let view = self.slider_view.clone();
+                move |ev: &MouseDownEvent, phase, cx| {
+                    if ev.button == MouseButton::Left {
+                        view.update(cx, |view, cx| {
+                            view.handle_mouse_click_or_drag(
+                                cx,
+                                MouseClickOrDrag::Click,
+                                ev.position,
+                            )
+                        })
+                    };
+                }
+            });
+            cx.on_mouse_event({
+                let view = self.slider_view.clone();
+                move |ev: &MouseMoveEvent, phase, cx| {
+                    let state = if let Some(MouseButton::Left) = ev.pressed_button {
+                        MouseClickOrDrag::Drag
+                    } else {
+                        MouseClickOrDrag::Release
+                    };
+                    if view.read(cx).dragging {
+                        view.update(cx, |view, cx| {
+                            view.handle_mouse_click_or_drag(cx, state, ev.position)
+                        });
+                    };
+                }
+            });
             cx.paint_image(bounds, Corners::all(px(0.)), data.clone(), false)
                 .log_err();
         }

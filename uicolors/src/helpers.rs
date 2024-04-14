@@ -1,5 +1,9 @@
+use gpui::Keystroke;
+use once_cell::sync::Lazy;
 use std::panic::Location;
 use tracing::error;
+
+pub static KEY_SPACE: Lazy<Keystroke> = Lazy::new(|| Keystroke::parse("space").unwrap());
 
 pub trait ResultExt<E> {
     type Ok;

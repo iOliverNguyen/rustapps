@@ -1,8 +1,11 @@
-use crate::Assets;
+use crate::{AppState, Assets, Workspace};
 use gpui::*;
 use gpui_ext::*;
+use std::sync::Arc;
 
 pub struct LeftPanel {
+    app_state: Arc<AppState>,
+    workspace: WeakView<Workspace>,
     btn_home: View<TopLevelButton>,
     btn_browse: View<TopLevelButton>,
     btn_favorites: View<TopLevelButton>,
@@ -10,8 +13,14 @@ pub struct LeftPanel {
 }
 
 impl LeftPanel {
-    pub fn new(cx: &mut ViewContext<Self>) -> Self {
+    pub fn new(
+        cx: &mut ViewContext<Self>,
+        workspace: WeakView<Workspace>,
+        app_state: Arc<AppState>,
+    ) -> Self {
         Self {
+            app_state,
+            workspace,
             btn_home: cx.new_view(|cx| TopLevelButton {
                 label: "Home".into(),
                 icon: Assets::icon("home").into(),
