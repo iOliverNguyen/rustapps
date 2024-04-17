@@ -6,7 +6,6 @@ use std::sync::Arc;
 pub struct Workspace {
     app_state: Arc<AppState>,
     title_bar: View<TitleBar>,
-    status_bar: View<StatusBar>,
     left_panel: View<LeftPanel>,
     central: View<Central>,
     focus_handle: FocusHandle,
@@ -15,7 +14,6 @@ pub struct Workspace {
 impl Workspace {
     pub fn new(cx: &mut ViewContext<Self>) -> Self {
         let color = ColorFormat::random_hsl();
-        let palette = ColorPalette::from(color.canonicalize());
 
         let app_state = Arc::new(AppState {
             color: cx.new_model(|cx| color),
@@ -27,7 +25,6 @@ impl Workspace {
         let workspace = Self {
             app_state: app_state.clone(),
             title_bar: cx.new_view(|cx| TitleBar::new(cx)),
-            status_bar: cx.new_view(|cx| StatusBar::new(cx)),
             left_panel: cx
                 .new_view(|cx| LeftPanel::new(cx, weak_handle.clone(), app_state.clone())),
             central: cx.new_view(|cx| Central::new(cx, weak_handle.clone(), app_state.clone())),
@@ -96,6 +93,5 @@ impl Render for Workspace {
                     .child(self.left_panel.clone())
                     .child(self.central.clone()),
             )
-            .child(self.status_bar.clone())
     }
 }

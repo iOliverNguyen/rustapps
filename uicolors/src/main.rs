@@ -17,7 +17,8 @@ use views::*;
 
 actions!(app, [Quit, RandomColor]);
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = cli::Args::parse();
     init_log();
 
