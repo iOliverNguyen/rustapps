@@ -64,7 +64,7 @@ impl ColorInputView {
                 })
             }
         };
-        cx.refresh();
+        cx.refresh()
     }
 }
 

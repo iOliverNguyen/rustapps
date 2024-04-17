@@ -11,6 +11,7 @@ pub enum ColorSliderEvent {
 
 impl EventEmitter<ColorSliderEvent> for Hsla {}
 
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ColorScale {
     Hue,
     Saturation,
@@ -33,46 +34,72 @@ impl ColorScale {
         }
     }
 
-    fn gen_image(&self, w: f32, h: f32, padding: f32, color: Hsla) -> ImageData {
+    fn unit(&self, c: Hsla) -> u16 {
+        match self {
+            ColorScale::Hue => (c.h.clamp(0., 1.) * 360.) as u16,
+            ColorScale::Saturation => (c.s.clamp(0., 1.) * 100.) as u16,
+            ColorScale::Lightness => (c.l.clamp(0., 1.) * 100.) as u16,
+        }
+    }
+
+    fn should_gen_image(&self, c0: Hsla, c1: Hsla) -> bool {
+        match self {
+            ColorScale::Hue => false,
+            ColorScale::Lightness => {
+                Self::Hue.unit(c0) != Self::Hue.unit(c1)
+                    || Self::Saturation.unit(c0) != Self::Saturation.unit(c1)
+            }
+            ColorScale::Saturation => {
+                Self::Hue.unit(c0) != Self::Hue.unit(c1)
+                    || Self::Lightness.unit(c0) != Self::Lightness.unit(c1)
+            }
+        }
+    }
+
+    fn gen_image(&self, w: u32, h: u32, padding: u32, color: Hsla) -> ImageData {
         fn cv(f: f32) -> u8 {
             (f * 256.).clamp(0., 255.) as u8
         }
 
-        let (rw, rh) = (w - padding * 2., h - padding * 2.);
-        let (x0, x1) = (padding as u32, (w - padding) as u32);
+        let rw = w - padding * 2;
+        let (x0, x1) = (padding, (w - padding));
         let buffer: ImageBuffer<Bgra<u8>, Vec<u8>> = match self {
-            ColorScale::Hue => ImageBuffer::from_fn(w as u32, h as u32, |x, y| {
+            ColorScale::Hue => ImageBuffer::from_fn(w, h, |x, _y| {
                 let hue = if x <= x0 || x >= x1 {
                     0.
                 } else {
-                    x as f32 / rw
+                    (x - x0) as f32 / rw as f32
                 };
                 let color = hsla(hue, 1., 0.5, 1.);
-                let Rgba { r, g, b, a } = color.to_rgb();
+                let Rgba { r, g, b, a: _ } = color.to_rgb();
                 Bgra([cv(b), cv(g), cv(r), 255])
             }),
-            ColorScale::Lightness => ImageBuffer::from_fn(w as u32, h as u32, |x, y| {
-                let lightness = if x <= x0 {
-                    0.
-                } else if x >= x1 {
-                    1.
-                } else {
-                    x as f32 / rw
-                };
-                let color = hsla(color.h, color.s, lightness, 1.);
-                let Rgba { r, g, b, a } = color.to_rgb();
-                Bgra([cv(b), cv(g), cv(r), 255])
-            }),
-            ColorScale::Saturation => ImageBuffer::from_fn(w as u32, h as u32, |x, y| {
+            ColorScale::Saturation => ImageBuffer::from_fn(w, h, |x, _y| {
                 let saturation = if x <= x0 {
                     0.
                 } else if x >= x1 {
                     1.
                 } else {
-                    x as f32 / rw
+                    // (x - x0) as f32 / rw as f32
+                    x as f32 / w as f32
                 };
+                // let saturation = 0.;
                 let color = hsla(color.h, saturation, color.l, 1.);
-                let Rgba { r, g, b, a } = color.to_rgb();
+                let Rgba { r, g, b, a: _ } = color.to_rgb();
+                Bgra([cv(b), cv(g), cv(r), 255])
+            }),
+            ColorScale::Lightness => ImageBuffer::from_fn(w, h, |x, _y| {
+                let lightness = if x <= x0 {
+                    0.
+                } else if x >= x1 {
+                    1.
+                } else {
+                    // (x - x0) as f32 / rw as f32
+                    x as f32 / w as f32
+                };
+                // let lightness = 0.;
+                let color = hsla(color.h, color.s, lightness, 1.);
+                let Rgba { r, g, b, a: _ } = color.to_rgb();
                 Bgra([cv(b), cv(g), cv(r), 255])
             }),
         };
@@ -81,15 +108,17 @@ impl ColorScale {
 }
 
 pub struct ColorSlider {
-    pub color: Model<Hsla>,
-    pub scale: ColorScale,
-    pub value: f32,
-    pub padding: f32,
-    pub bounds: Option<Bounds<Pixels>>,
-    pub image_data: Option<Arc<ImageData>>,
+    color: Model<Hsla>,
+    prev_color: Hsla,
+    scale: ColorScale,
+    padding: Pixels,
+    thumb_size: Pixels,
+    bounds: Option<Bounds<Pixels>>,
+    image_data: Option<Arc<ImageData>>,
 
     dragging: bool,
     focus_handle: FocusHandle,
+    _subscriptions: Vec<Subscription>,
 }
 
 impl ColorSlider {
@@ -98,21 +127,30 @@ impl ColorSlider {
         scale: ColorScale,
         color: Model<Hsla>,
     ) -> View<Self> {
-        let value = match scale {
-            ColorScale::Hue => color.read(cx).h,
-            ColorScale::Saturation => color.read(cx).s,
-            ColorScale::Lightness => color.read(cx).l,
-        };
-        cx.new_view(|cx| Self {
-            color,
-            scale,
-            value,
-            padding: 4.,
-            bounds: None,
-            image_data: None,
-            dragging: false,
-            focus_handle: cx.focus_handle(),
+        cx.new_view(|cx| {
+            let _subscriptions = vec![cx.observe(&color, Self::handle_color_change)];
+
+            Self {
+                color: color.clone(),
+                prev_color: color.read(cx).to_owned(),
+                scale,
+                padding: px(4.),
+                thumb_size: px(20.),
+                bounds: None,
+                image_data: None,
+                dragging: false,
+                focus_handle: cx.focus_handle(),
+                _subscriptions,
+            }
         })
+    }
+
+    fn handle_color_change(&mut self, color: Model<Hsla>, cx: &mut ViewContext<Self>) {
+        let c = color.read(cx).clone();
+        if self.scale.should_gen_image(self.prev_color, c) {
+            self.image_data = None;
+        }
+        self.prev_color = c;
     }
 
     fn handle_mouse_click_or_drag(
@@ -121,10 +159,18 @@ impl ColorSlider {
         ev: MouseClickOrDrag,
         pos: Point<Pixels>,
     ) {
+        let (padding, thumb_size) = (self.padding, self.thumb_size);
         if let Some(bounds) = self.bounds {
+            let (size, origin) = (bounds.size, bounds.origin);
             match ev {
                 MouseClickOrDrag::Click => {
-                    if !bounds.contains(&pos) {
+                    let dy = (thumb_size - size.height) / 2.;
+                    let min_y = origin.y - dy;
+                    let max_y = origin.y + size.height + dy;
+                    let dx = padding;
+                    let min_x = origin.x - dx;
+                    let max_x = origin.x + size.width + dx;
+                    if !(min_x <= pos.x && pos.x <= max_x && min_y <= pos.y && pos.y <= max_y) {
                         return;
                     }
                     self.dragging = true;
@@ -140,8 +186,8 @@ impl ColorSlider {
                 }
             };
 
-            let x = pos.x - bounds.origin.x - px(self.padding);
-            let w = bounds.size.width - self.padding * px(2.);
+            let x = pos.x - bounds.origin.x - padding;
+            let w = bounds.size.width - padding * px(2.);
             match self.scale {
                 ColorScale::Hue => {
                     let hue = (x / w).clamp(0., 1.);
@@ -180,8 +226,8 @@ impl FocusableView for ColorSlider {
 
 impl Render for ColorSlider {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        let thumb_size = 20.;
-        let border = 3.;
+        let (padding, thumb_size) = (self.padding, self.thumb_size);
+        let border = px(3.);
         let focused = self.focus_handle.is_focused(cx);
         let color = self.color.read(cx);
         let value = match self.scale {
@@ -197,14 +243,14 @@ impl Render for ColorSlider {
         let thumb_x: Pixels = match self.bounds {
             None => px(0.),
             Some(bounds) => {
-                let range = bounds.size.width - self.padding * px(2.);
-                value * range - px(thumb_size) / 2. + px(self.padding)
+                let range = bounds.size.width - padding * px(2.);
+                value * range - thumb_size / 2. + padding
             }
         };
 
         div()
             .w_full()
-            .h(px(thumb_size))
+            .h(thumb_size)
             .flex_center()
             .child(
                 div()
@@ -217,18 +263,18 @@ impl Render for ColorSlider {
                     .absolute()
                     .top(px(0.))
                     .left(thumb_x)
-                    .w(px(thumb_size))
-                    .h(px(thumb_size))
-                    .rounded(px(thumb_size / 2.))
+                    .w(thumb_size)
+                    .h(thumb_size)
+                    .rounded(thumb_size / 2.)
                     .bg(hsla(0., 0., 0.8, 1.))
                     .child(
                         div()
                             .absolute()
-                            .top(px(border))
-                            .left(px(border))
-                            .w(px(thumb_size - border * 2.))
-                            .h(px(thumb_size - border * 2.))
-                            .rounded(px(thumb_size / 2. - border))
+                            .top(border)
+                            .left(border)
+                            .w(thumb_size - border * 2.)
+                            .h(thumb_size - border * 2.)
+                            .rounded(thumb_size / 2. - border)
                             .bg(thumb_color),
                     ),
             )
@@ -294,11 +340,12 @@ impl Element for ColorSliderElement {
             };
             let image_data = if dirty || view.image_data.is_none() {
                 Some(Arc::new({
+                    let sf = cx.scale_factor();
                     let Size { width, height } = bounds.size;
                     view.scale.gen_image(
-                        f32::from(width),
-                        f32::from(height),
-                        view.padding,
+                        (width * sf).into(),
+                        (height * sf).into(),
+                        (view.padding * sf).into(),
                         view.color.read(cx).to_owned(),
                     )
                 }))
