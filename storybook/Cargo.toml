@@ -1,17 +1,13 @@
 [package]
-name = "uicolors"
+name = "storybook"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = { workspace = true }
+anyhow = "1.0.82"
 clap = { workspace = true }
-gpui_ext = { workspace = true }
 gpui = { workspace = true }
-image = { workspace = true }
-indexmap = { workspace = true }
-once_cell = { workspace = true }
-rand = { workspace = true }
+gpui_ext = { workspace = true }
 rust-embed = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

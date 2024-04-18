@@ -2,9 +2,11 @@
 
 alias cd.="cd ${PROJECT_ROOT}"
 alias cd.crates="cd ${PROJECT_ROOT}/crates"
-
 alias cd_exp="cd ${PROJECT_ROOT}/_exp"
 alias cd.exp="cd ${PROJECT_ROOT}/_exp/exp"
+
+alias cd.blocks="cd ${PROJECT_ROOT}/crates/blocks"
+alias cd.storybook="cd ${PROJECT_ROOT}/storybook"
 alias cd.gpui_ext="cd ${PROJECT_ROOT}/crates/gpui_ext"
 alias cd.lv="cd ${PROJECT_ROOT}/lv"
 alias cd.scripts="cd ${PROJECT_ROOT}/scripts"
