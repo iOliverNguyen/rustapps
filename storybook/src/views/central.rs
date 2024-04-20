@@ -1,4 +1,5 @@
-use crate::{AppState, Assets, Workspace};
+use crate::{AppState, Assets, ButtonStory, Workspace};
+use blocks::Button;
 use gpui::*;
 use gpui_ext::*;
 use std::sync::Arc;
@@ -6,6 +7,7 @@ use std::sync::Arc;
 pub struct Central {
     app_state: Arc<AppState>,
     workspace: WeakView<Workspace>,
+    button_story: View<ButtonStory>,
     focus_handle: FocusHandle,
 }
 
@@ -18,6 +20,7 @@ impl Central {
         Self {
             app_state,
             workspace,
+            button_story: cx.new_view(|cx| ButtonStory::new(cx)),
             focus_handle: cx.focus_handle(),
         }
     }
@@ -31,6 +34,12 @@ impl FocusableView for Central {
 
 impl Render for Central {
     fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        div().size_full().child(div().size_full().bg(rgb(0x8888aa)))
+        div().size_full().child(
+            div()
+                .size_full()
+                .flex_center()
+                .bg(rgb(0x8888aa))
+                .child(self.button_story.clone()),
+        )
     }
 }
