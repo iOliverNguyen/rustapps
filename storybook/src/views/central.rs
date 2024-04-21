@@ -1,5 +1,4 @@
-use crate::{AppState, Assets, ButtonStory, Workspace};
-use blocks::Button;
+use crate::{AppState, ButtonStory, Workspace};
 use gpui::*;
 use gpui_ext::*;
 use std::sync::Arc;

@@ -600,6 +600,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "blocks-md"
+version = "0.1.0"
+dependencies = [
+ "blocks",
+ "gpui",
+ "gpui_ext",
+ "image",
+]
+
+[[package]]
 name = "bstr"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3834,6 +3844,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "blocks",
+ "blocks-md",
  "clap 4.5.4",
  "gpui",
  "gpui_ext",

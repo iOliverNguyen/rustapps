@@ -1,0 +1,10 @@
+[package]
+name = "blocks-md"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+blocks.workspace = true
+gpui.workspace = true
+gpui_ext.workspace = true
+image.workspace = true

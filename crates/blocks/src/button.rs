@@ -1,9 +1,10 @@
 use crate::Icon;
-use gpui::*;
-
-pub fn button() -> ButtonBuilder {
-    ButtonBuilder::new()
-}
+use crate::ThemeAccess;
+use crate::ThemeSource;
+use crate::ThemeStore;
+use crate::ThemeVariant;
+use gpui::{prelude::FluentBuilder, *};
+use std::marker::PhantomData;
 
 pub struct ButtonAttrs {
     pub text: Option<SharedString>,
@@ -19,6 +20,7 @@ impl Default for ButtonAttrs {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct ButtonStates {
     pub selected: bool,
     pub disabled: bool,
@@ -42,7 +44,8 @@ impl Default for ButtonStates {
 }
 
 // https://m3.material.io/components/all-buttons
-pub enum ButtonType {
+#[derive(Clone, Copy)]
+pub enum ButtonVariant {
     Basic,
     Elevated,
     Filled,
@@ -50,115 +53,92 @@ pub enum ButtonType {
     Outline,
 }
 
-pub struct ButtonStyles {
-    pub typ: ButtonType,
+pub trait GenericButtonStyles {
+    fn styles(&self, states: ButtonStates) -> ButtonStyles;
 }
 
-impl Default for ButtonStyles {
+#[derive(Default)]
+pub struct ButtonStyles {
+    pub background: Hsla,
+    pub label_color: Hsla,
+    pub icon_color: Hsla,
+    pub border_color: Hsla,
+    //
+    // more customization?
+}
+
+impl Default for ButtonVariant {
     fn default() -> Self {
-        Self {
-            typ: ButtonType::Basic,
-        }
+        ButtonVariant::Basic
     }
 }
 
 pub struct ButtonElements {
-    pub container: Div,
+    pub base: Div,
     pub text: Option<Div>,
     pub icon: Option<Div>,
 }
 
-pub trait ApplyButtonStyles {
-    fn apply_button_styles(self, this: &Button, elems: ButtonElements) -> ButtonElements;
-}
-
-impl ApplyButtonStyles for ApplyButtonStylesFn {
-    fn apply_button_styles(self, this: &Button, elems: ButtonElements) -> ButtonElements {
-        self(this, elems)
-    }
-}
-
-pub type ApplyButtonStylesFn = fn(this: &Button, elems: ButtonElements) -> ButtonElements;
-
-pub struct ButtonBuilder {
+#[derive(IntoElement)]
+pub struct Button<T: ThemeSource> {
+    pub elems: ButtonElements,
     pub attrs: ButtonAttrs,
+    pub states: ButtonStates,
+    pub variant: ButtonVariant,
     pub styles: ButtonStyles,
+    pub theme_variant: T::VARIANT,
+
+    _phantom: PhantomData<T>,
 }
 
-impl ButtonBuilder {
-    pub fn new() -> Self {
+impl<T: ThemeSource> Button<T> {
+    fn new() -> Self {
         Self {
+            elems: ButtonElements {
+                base: div(),
+                text: None,
+                icon: None,
+            },
             attrs: ButtonAttrs::default(),
+            states: ButtonStates::default(),
+            variant: ButtonVariant::default(),
             styles: ButtonStyles::default(),
+            theme_variant: T::VARIANT::default(),
+            _phantom: PhantomData,
         }
     }
 
-    pub fn text(mut self, text: SharedString) -> Self {
-        self.attrs.text = Some(text);
-        self
-    }
-
-    pub fn icon(mut self, icon: Icon) -> Self {
-        self.attrs.icon = Some(icon);
-        self
-    }
-
-    pub fn build<T: Render>(self, cx: &mut ViewContext<T>) -> View<Button> {
-        cx.new_view(|cx| Button::new(cx, self.attrs, self.styles))
+    pub fn new_text(text: impl Into<SharedString>) -> Self {
+        let mut button = Self::new();
+        button.attrs.text = Some(text.into());
+        button
     }
 }
 
-pub struct Button {
-    pub attrs: Model<ButtonAttrs>,
-    pub states: Model<ButtonStates>,
-    pub styles: Model<ButtonStyles>,
-    pub apply_style: Option<ApplyButtonStylesFn>,
-    pub focus_handle: FocusHandle,
-}
+impl<T: ThemeSource> RenderOnce for Button<T> {
+    fn render(mut self, cx: &mut WindowContext) -> impl IntoElement {
+        let theme: &ThemeStore<T> = cx.theme();
+        let style = theme.variant(self.theme_variant);
 
-impl Button {
-    pub fn new(cx: &mut ViewContext<Self>, attrs: ButtonAttrs, styles: ButtonStyles) -> Self {
-        Self {
-            attrs: cx.new_model(|cx| attrs),
-            states: cx.new_model(|cx| ButtonStates::default()),
-            styles: cx.new_model(|cx| styles),
-            apply_style: None,
-            focus_handle: cx.focus_handle(),
-        }
+        let styles = style.apply_button_styles(self.variant, self.states);
+
+        let elems = self.elems;
+        elems
+            .base
+            .w(px(100.))
+            .h(px(40.))
+            .hover(|st| {
+                let mut states = self.states;
+                states.hovered = true;
+                let x = style.apply_button_styles(self.variant, states);
+                st.bg(x.background)
+            })
+            .when_some(self.attrs.text, |base, text| base.child(div().child(text)))
+            .when_some(self.attrs.icon, |base, icon| base.child(div()))
     }
 }
 
-impl FocusableView for Button {
-    fn focus_handle(&self, cx: &AppContext) -> FocusHandle {
-        self.focus_handle.clone()
-    }
-}
-
-impl Render for Button {
-    fn render(&mut self, cx: &mut ViewContext<Self>) -> impl IntoElement {
-        let container = div().w(px(100.)).h(px(40.)).bg(rgba(0xaaffaaff));
-        let elems = ButtonElements {
-            container,
-            text: None,
-            icon: None,
-        };
-        let elems = match self.apply_style {
-            Some(f) => f(self, elems),
-            _ => elems,
-        };
-        let ButtonElements {
-            mut container,
-            mut text,
-            mut icon,
-        } = elems;
-        container = match text {
-            Some(text) => container.child(text),
-            _ => container,
-        };
-        container = match icon {
-            Some(icon) => container.child(icon),
-            _ => container,
-        };
-        container
-    }
-}
+// how to store state?
+// how to customize style?
+// how to handle events?
+pub struct ToggleButton {}

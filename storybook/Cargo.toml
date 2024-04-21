@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.82"
 blocks.workspace = true
+blocks-md.workspace = true
 clap = { workspace = true }
 gpui = { workspace = true }
 gpui_ext = { workspace = true }

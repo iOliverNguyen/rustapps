@@ -4,6 +4,8 @@ mod stories;
 mod views;
 
 use assets::*;
+use blocks::ThemeStore;
+use blocks_md::MdTheme;
 use gpui::*;
 use states::*;
 use stories::*;
@@ -31,6 +33,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }),
             ..WindowOptions::default()
         };
+
+        let theme = ThemeStore::new(MdTheme::new());
+        cx.set_global(theme);
 
         cx.open_window(opts, |cx| {
             let workspace = cx.new_view(|cx| Workspace::new(cx));

@@ -5,6 +5,7 @@ members = [
     "uicolors",
     "crates/import_vscode",
     "crates/theme",
+    "crates/blocks-md",
     "lv",
     "crates/gpui_ext",
     "crates/blocks",
@@ -13,6 +14,7 @@ members = [
 
 [workspace.dependencies]
 blocks = { path = "crates/blocks" }
+blocks-md = { path = "crates/blocks-md" }
 
 # gpui = { git = "https://github.com/zed-industries/zed" }
 gpui = { path = "/Users/i/ws/clone/zed/crates/gpui" }
